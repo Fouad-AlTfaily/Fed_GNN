@@ -1,0 +1,50 @@
+# Demo configuration - reduced complexity for quick testing
+experiment:
+  name: "fedgatsage_demo"
+  description: "Quick demo of FedGATSage with reduced parameters"
+  seed: 42
+  device: "auto"
+
+dataset:
+  name: "cic_ton_iot"
+  data_dir: "data/processed"
+  sample_ratio: 0.1  # Use only 10% of data for demo
+  excluded_attacks: ["mitm", "ransomware"]
+
+federated:
+  num_clients: 3  # Reduced for demo
+  num_rounds: 5   # Reduced for demo
+  patience: 3
+
+model:
+  gat:
+    hidden_dim: 128  # Smaller for demo
+    num_heads: 4
+    num_layers: 2
+    dropout: 0.3
+    
+  graphsage:
+    hidden_dim: 128
+    num_layers: 2
+    dropout: 0.3
+    
+  detectors:
+    types: ["temporal"]  # Just one detector for demo
+    ensemble_method: "voting"
+
+training:
+  client:
+    epochs: 3  # Reduced for demo
+    learning_rate: 0.003
+    weight_decay: 1e-4
+    
+  server:
+    epochs: 5  # Reduced for demo
+    learning_rate: 0.003
+    weight_decay: 1e-3
+
+output:
+  base_dir: "results/demo"
+  save_models: false
+  create_plots: true
+  log_level: "INFO"

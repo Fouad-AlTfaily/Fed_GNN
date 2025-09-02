@@ -1,0 +1,84 @@
+# Default configuration for FedGATSage experiments
+experiment:
+  name: "fedgatsage_default"
+  description: "Default FedGATSage experiment configuration"
+  seed: 42
+  device: "auto"  # auto, cuda, cpu
+
+# Dataset configuration
+dataset:
+  name: "cic_ton_iot"  # cic_ton_iot, nf_ton_iot
+  data_dir: "data/processed"
+  excluded_attacks: ["mitm", "ransomware"]
+  
+# Federated learning settings
+federated:
+  num_clients: 5
+  num_rounds: 15
+  patience: 7  # Early stopping patience
+  min_clients_per_round: 3
+  
+# Model architecture
+model:
+  # GAT settings (client-side)
+  gat:
+    hidden_dim: 256
+    num_heads: 8
+    num_layers: 3
+    dropout: 0.2
+    attention_dropout: 0.1
+    
+  # GraphSAGE settings (server-side)  
+  graphsage:
+    hidden_dim: 256
+    num_layers: 2
+    dropout: 0.3
+    aggregator: "mean"  # mean, max, lstm
+    
+  # Detector specialization
+  detectors:
+    types: ["temporal", "content", "behavioral"]
+    ensemble_method: "random_forest"  # voting, random_forest
+    
+# Training hyperparameters
+training:
+  client:
+    epochs: 5
+    learning_rate: 0.001
+    weight_decay: 1e-5
+    batch_size: null  # Full batch for graph data
+    gradient_clip: 1.0
+    
+  server:
+    epochs: 10
+    learning_rate: 0.001
+    weight_decay: 1e-4
+    gradient_clip: 1.0
+    
+# Community detection settings
+community:
+  method: "louvain"  # louvain, leiden, modularity
+  resolution: 1.0
+  similarity_threshold: 0.7
+  min_community_size: 3
+  
+# Feature engineering
+features:
+  centrality_measures: ["betweenness", "pagerank", "degree", "closeness"]
+  temporal_features: ["flow_rate", "iat_variance", "burst_ratio"]
+  content_features: ["payload_size", "port_analysis", "protocol_patterns"]  
+  behavioral_features: ["connection_patterns", "session_analysis"]
+  
+# Evaluation settings
+evaluation:
+  metrics: ["accuracy", "balanced_accuracy", "macro_f1", "per_class_f1"]
+  save_predictions: true
+  save_confusion_matrix: true
+  
+# Output settings
+output:
+  base_dir: "results"
+  save_models: true
+  save_embeddings: false
+  create_plots: true
+  log_level: "INFO"
