@@ -1,5 +1,6 @@
-**# FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection
-**
+# FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection
+
+<<<<<<< HEAD
 [![Paper](https://img.shields.io/badge/Paper-Scientific%20Reports-red)](https://doi.org/10.1038/s41598-025-25175-1)
 [![License](https://img.shields.io/badge/License-Open%20Access-green)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
@@ -11,7 +12,8 @@ Official implementation of **"Graph-based federated learning approach for intrus
 
 ---
 
-**## Abstract**
+## **Abstract**
+
 FedGATSage addresses critical limitations in federated learning for IoT intrusion detection where traditional approaches using LSTM/CNN cannot capture structural patterns, and GNN-based federated methods lose temporal patterns during parameter aggregation. Our hybrid architecture integrates client-side Graph Attention Networks (GAT) with server-side GraphSAGE through community abstraction, achieving:
 
 - **78.58% balanced accuracy** on NF-ToN-IoT (80.24% on CIC-ToN-IoT)
@@ -21,7 +23,7 @@ FedGATSage addresses critical limitations in federated learning for IoT intrusio
 
 ---
 
-**## Key Innovations**
+## **Key Innovations**
 
 ### 1. **Specialized GAT Detector Variants**
 Three specialized architectures targeting different attack categories:
@@ -46,7 +48,7 @@ Three specialized architectures targeting different attack categories:
 
 ---
 
-## Performance Results
+## **Performance Results**
 
 ### Overall Performance
 
@@ -79,16 +81,15 @@ Three specialized architectures targeting different attack categories:
 
 ---
 
-## 🏗️ Architecture
+## **Architecture**
 
-```
-<img width="664" height="491" alt="image" src="https://github.com/user-attachments/assets/b13b3206-93e4-4782-80a5-0452df76b7b6" />
+![FedGATSage Architecture](https://github.com/user-attachments/assets/b13b3206-93e4-4782-80a5-0452df76b7b6)
 
-```
+*Figure 1: Overview of the FedGATSage architecture showing client-side GAT processing with community detection, server-side GraphSAGE on overlay graph, and bidirectional model parameter updates.*
 
 ---
 
-## 🚀 Installation
+## **Installation**
 
 ### Prerequisites
 ```bash
@@ -121,7 +122,7 @@ seaborn>=0.11.0
 
 ---
 
-## 📁 Dataset Preparation
+## **Dataset Preparation**
 
 ### Download Datasets
 
@@ -146,7 +147,7 @@ data/
 
 ---
 
-## 💻 Usage
+## **Usage**
 
 ### Basic Training
 
@@ -200,7 +201,7 @@ python experiments/evaluate_model.py \
 
 ---
 
-## 📈 Reproducing Paper Results
+## **Reproducing Paper Results**
 
 ### Full Experimental Pipeline
 
@@ -231,7 +232,7 @@ python analysis/generate_figures.py \
 
 ---
 
-## 🔬 Key Components
+## **Key Components**
 
 ### Client-Side Processing
 ```python
@@ -271,7 +272,7 @@ updated_params = server.update_global_model(global_embeddings)
 
 ---
 
-## 📊 Project Structure
+## **Project Structure**
 
 ```
 Fed_GNN/
@@ -308,7 +309,7 @@ Fed_GNN/
 
 ---
 
-## 🎓 Citation
+## **Citation**
 
 If you use FedGATSage in your research, please cite our paper:
 
@@ -328,7 +329,7 @@ If you use FedGATSage in your research, please cite our paper:
 
 ---
 
-## 🔍 Key Technical Contributions
+## **Key Technical Contributions**
 
 ### 1. Solving the Dual Limitation Problem
 - **Traditional federated methods (LSTM/CNN)**: Cannot capture structural patterns due to architectural constraints
@@ -368,7 +369,7 @@ similarity(C_i, C_j) = (C_i · C_j) / (||C_i|| · ||C_j||)
 
 ---
 
-## 🛠️ Troubleshooting
+## **Troubleshooting**
 
 ### Common Issues
 
@@ -398,7 +399,7 @@ similarity(C_i, C_j) = (C_i · C_j) / (||C_i|| · ||C_j||)
 
 ---
 
-## 📝 Configuration Parameters
+## **Configuration Parameters**
 
 ### Model Hyperparameters
 
@@ -422,20 +423,20 @@ similarity(C_i, C_j) = (C_i · C_j) / (||C_i|| · ||C_j||)
 
 ---
 
-## 🌟 Advantages Over Existing Methods
+## **Advantages Over Existing Methods**
 
 | Feature | Traditional Federated | GNN Federated | **FedGATSage** |
 |---------|----------------------|---------------|----------------|
-| Captures structural patterns | ❌ | ✅ | ✅ |
-| Preserves temporal patterns | ❌ | ❌ | ✅ |
-| Privacy preservation | ✅ | ✅ | ✅ |
-| Low communication overhead | ⚠️ | ⚠️ | ✅ (85% reduction) |
-| Detects coordinated attacks | ❌ | ❌ | ✅ |
-| Specialized attack detection | ❌ | ❌ | ✅ |
+| Captures structural patterns | No | Yes | Yes |
+| Preserves temporal patterns | No | No | Yes |
+| Privacy preservation | Yes | Yes | Yes |
+| Low communication overhead | Partial | Partial | Yes (85% reduction) |
+| Detects coordinated attacks | No | No | Yes |
+| Specialized attack detection | No | No | Yes |
 
 ---
 
-## 🔮 Future Work
+## **Future Work**
 
 We are actively working on:
 
@@ -447,7 +448,7 @@ We are actively working on:
 
 ---
 
-## 🤝 Contributing
+## **Contributing**
 
 We welcome contributions! Please:
 
@@ -459,13 +460,13 @@ We welcome contributions! Please:
 
 ---
 
-## 📄 License
+## **License**
 
 This project is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgements
+## **Acknowledgements**
 
 This work is supported by:
 - **Ektidar**: Lebanese project for youth empowerment
@@ -474,7 +475,7 @@ This work is supported by:
 
 ---
 
-## 📧 Contact
+## **Contact**
 
 **Fouad Al Tfaily**
 - Email: fouad.altfaily@gmail.com
@@ -483,7 +484,7 @@ This work is supported by:
 
 ---
 
-## 📚 Related Publications
+## **Related Publications**
 
 1. Al Tfaily, F., et al. (2025). "Generating realistic cyber security datasets for IoT networks with diverse complex network properties." *IoTBDS 2025*.
 
@@ -495,6 +496,68 @@ This work is supported by:
 
 <div align="center">
 
-**⭐ If you find this work useful, please consider citing our paper and starring the repository! ⭐**
+**If you find this work useful, please consider citing our paper and starring the repository!**
 
 </div>
+=======
+## Overview
+
+This repository contains the reference implementation of **FedGATSage**, a novel federated learning architecture designed for privacy-preserving Intrusion Detection Systems (IDS) in IoT networks. By combining client-side Graph Attention Networks (GAT) with server-side GraphSAGE, our approach enables collaborative learning without sharing raw network traffic data.
+
+## Key Innovation: Community Abstraction
+
+The core contribution of this work is the **Community Abstraction** mechanism. Instead of sharing model updates directly or sharing raw data, clients generate "flow embeddings" that represent the relationships between network communities.
+
+*   **Privacy-Preserving**: Raw device data never leaves the local network.
+*   **Structure-Aware**: Captures the topological patterns of attacks (e.g., botnets, DDoS) rather than just individual packet features.
+*   **Efficient**: Reduces communication overhead by sharing abstract embeddings rather than full model weights or large datasets.
+
+## Project Structure
+
+We have organized the codebase to facilitate reproducibility and clarity:
+
+```
+Fed_GNN/
+├── data/                   # Generated dataset directory (managed by preprocessing script)
+├── experiments/            # Main experiment execution scripts
+│   └── fedgatsage_experiment.py
+├── src/                    # Core implementation modules
+│   ├── federated_learning.py   # Orchestration of the federated process
+│   ├── gnn_models.py           # PyTorch Geometric model definitions (GAT, GraphSAGE)
+│   ├── feature_engineering.py  # Traffic feature extraction logic
+│   ├── community_detection.py  # Community detection and abstraction algorithms
+│   └── utils.py                # Helper functions for metrics and logging
+├── preprocess_data.py      # Utility to prepare raw CSV data for federation
+└── requirements.txt        # Python dependencies
+```
+
+## Getting Started
+
+### 1. Prerequisites
+
+```bash
+python experiments/fedgatsage_experiment.py --data_dir data --num_clients 5 --num_rounds 15
+```
+
+**Demo Mode (Fast Verification):**
+```bash
+python experiments/fedgatsage_experiment.py --data_dir data --demo_mode
+```
+
+## Citation
+
+If you use this code in your research, please cite our paper:
+
+```bibtex
+@article{fedgatsage2024,
+  title={FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection},
+  author={AlTfaily, Fouad and [Co-Authors]},
+  journal={[Journal Name]},
+  year={2024}
+}
+```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+>>>>>>> 1826533 (updated codebase to reflect paper with dummy data as fallback in case real world datasets were not found)

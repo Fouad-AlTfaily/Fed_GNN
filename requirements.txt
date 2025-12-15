@@ -18,7 +18,7 @@ plotly>=5.0.0
 # Network Analysis and Community Detection
 networkx>=2.6.0
 python-louvain>=0.15
-community>=0.13.0
+
 
 # Utilities
 tqdm>=4.62.0

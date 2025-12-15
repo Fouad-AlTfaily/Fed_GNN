@@ -8,8 +8,13 @@ logger = logging.getLogger(__name__)
 
 class CommunityAwareProcessor:
     """
-    Bridge between explicit community detection (as described in paper) 
-    and flow-level community abstraction (as implemented in practice).
+    This class acts as the bridge between the theoretical "Community Abstraction" 
+    described in the paper and the practical implementation.
+    
+    It handles:
+    1. Detecting communities in the network graph (using Louvain).
+    2. Calculating "Modularity Vitality" to see how important each node is.
+    3. Translating these graph concepts into features our GNN can learn from.
     """
     
     def __init__(self):
@@ -124,7 +129,7 @@ class CommunityAwareProcessor:
            - These features encode community structure implicitly
         
         2. Flow Embeddings as Inter-Community Representations:
-           - Flow embedding = [src_emb || dst_emb || (src_emb ⊙ dst_emb) || |src_emb - dst_emb|]
+           - Flow embedding = [src_emb || dst_emb || (src_emb * dst_emb) || |src_emb - dst_emb|]
            - Captures relationships between community members
            - Abstracts individual device behaviors into connection patterns
         
@@ -148,3 +153,6 @@ def demonstrate_equivalence():
     print("=== FedGATSage: Community Abstraction Equivalence ===")
     processor = CommunityAwareProcessor()
     print(processor.explain_flow_as_community_abstraction())
+
+
+

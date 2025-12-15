@@ -8,6 +8,7 @@ import sys
 import argparse
 import time
 from pathlib import Path
+import subprocess
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
@@ -30,8 +31,10 @@ def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='FedGATSage Experiment')
     
-    parser.add_argument('--data_dir', type=str, required=True,
-                       help='Path to dataset directory')
+    parser.add_argument('--data_dir', type=str, default='data',
+                       help='Path to dataset directory (default: data)')
+    parser.add_argument('--input_file', type=str, default=None,
+                       help='Path to raw input CSV file (if data_dir is not prepared)')
     parser.add_argument('--dataset', type=str, choices=['nf_ton_iot', 'cic_ton_iot'],
                        default='cic_ton_iot', help='Dataset to use')
     parser.add_argument('--num_clients', type=int, default=5,
@@ -52,8 +55,59 @@ def parse_args():
                        help='Logging level')
     parser.add_argument('--demo_mode', action='store_true',
                        help='Run in demo mode (reduced complexity)')
+    parser.add_argument('--preprocess', action='store_true',
+                       help='Force run data preprocessing')
     
     return parser.parse_args()
+
+def check_and_preprocess_data(args):
+    """Check if data directory exists and is populated, otherwise run preprocessing"""
+    data_ready = True
+    
+    # Check if directories exist
+    for detector in args.detector_types:
+        detector_dir = os.path.join(args.data_dir, f'{detector}_detector')
+        if not os.path.exists(detector_dir):
+            data_ready = False
+            break
+        
+        # Check for client files
+        client_files = [f for f in os.listdir(detector_dir) if f.startswith('client_')]
+        if len(client_files) < args.num_clients:
+            data_ready = False
+            break
+            
+    if args.preprocess or not data_ready:
+        logger.info("Data directory not ready or preprocessing requested. Running preprocessing...")
+        
+        input_file = args.input_file
+        if not input_file:
+             # Try to find a likely CSV file if input_file not specified
+             potential_files = [f for f in os.listdir(args.data_dir) if f.endswith('.csv')] if os.path.exists(args.data_dir) else []
+             if potential_files:
+                 input_file = os.path.join(args.data_dir, potential_files[0])
+                 logger.info(f"Auto-detected input file: {input_file}")
+             else:
+                 # Fallback to dummy data creation handled by preprocess_data.py
+                 input_file = os.path.join(args.data_dir, 'dummy_data.csv')
+                 logger.warning(f"No input file specified. Will generate dummy data at {input_file}")
+            
+        # Run preprocessing script
+        cmd = [
+            sys.executable, 
+            'preprocess_data.py',
+            '--input_file', input_file,
+            '--output_dir', args.data_dir,
+            '--num_clients', str(args.num_clients),
+            '--seed', str(args.seed)
+        ]
+        
+        try:
+            subprocess.check_call(cmd)
+            logger.info("Preprocessing completed successfully")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Preprocessing failed: {e}")
+            sys.exit(1)
 
 def setup_experiment(args):
     """Setup experiment environment"""
@@ -74,6 +128,9 @@ def setup_experiment(args):
     logger.info(f"Using device: {device}")
     logger.info(f"Experiment arguments: {vars(args)}")
     
+    # Check and preprocess data
+    check_and_preprocess_data(args)
+    
     return device
 
 def demonstrate_community_abstraction(data_dir: str):
@@ -87,17 +144,20 @@ def demonstrate_community_abstraction(data_dir: str):
     detector_types = ['temporal', 'content', 'behavioral']
     for detector_type in detector_types:
         detector_dir = os.path.join(data_dir, f'{detector_type}_detector')
+        if not os.path.exists(detector_dir):
+            continue
+            
         sample_file = os.path.join(detector_dir, 'client_1.csv')
         
         if os.path.exists(sample_file):
             logger.info(f"Demonstrating community detection on {detector_type} detector data")
             
             # Load small sample
-            df = pd.read_csv(sample_file).head(1000)  # Just first 1000 rows
-            
-            # Check required columns
-            if 'Src IP' in df.columns and 'Dst IP' in df.columns:
-                try:
+            try:
+                df = pd.read_csv(sample_file).head(1000)  # Just first 1000 rows
+                
+                # Check required columns
+                if 'Src IP' in df.columns and 'Dst IP' in df.columns:
                     df_enhanced = processor.create_community_enhanced_features(df, {})
                     
                     if processor.communities:
@@ -108,11 +168,10 @@ def demonstrate_community_abstraction(data_dir: str):
                         community_sizes = pd.Series(processor.communities).value_counts()
                         logger.info(f"Community sizes: {dict(community_sizes.head())}")
                     
-                    break  # Successfully demonstrated, exit loop
-                    
-                except Exception as e:
-                    logger.warning(f"Could not demonstrate community detection on {detector_type}: {e}")
-                    continue
+                    break
+            except Exception as e:
+                logger.warning(f"Could not demonstrate community detection on {detector_type}: {e}")
+                continue
     
     logger.info("=== COMMUNITY ABSTRACTION DEMONSTRATION COMPLETE ===")
 
@@ -219,7 +278,11 @@ def evaluate_system(fed_system: FedGATSageSystem, args) -> dict:
             return {}
         
         # Load and process test data
-        test_data = test_loader._process_to_graph(pd.read_csv(test_data_path))
+        df_test = pd.read_csv(test_data_path)
+        if args.demo_mode:
+            df_test = df_test.head(1000) # Reduce size for demo
+            
+        test_data = test_loader._process_to_graph(df_test)
         
         if test_data is None or len(test_data['edge_labels']) == 0:
             logger.warning("Test data could not be processed")
@@ -284,69 +347,31 @@ def create_visualizations(results: dict, output_dir: str):
             classes = list(evaluation_results['per_class_detailed'].keys())
             f1_scores = [evaluation_results['per_class_detailed'][c]['f1'] for c in classes]
             
-            bars = ax.bar(classes, f1_scores, alpha=0.7)
+            x = np.arange(len(classes))
+            ax.bar(x, f1_scores)
+            ax.set_xticks(x)
+            ax.set_xticklabels(classes, rotation=45)
             ax.set_ylabel('F1 Score')
-            ax.set_title('Per-Class F1 Scores')
-            ax.set_ylim(0, 1)
+            ax.set_title('Per-Class Performance')
             
-            # Add value labels on bars
-            for bar, score in zip(bars, f1_scores):
-                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                       f'{score:.3f}', ha='center', va='bottom')
-            
-            plt.xticks(rotation=45)
             plt.tight_layout()
-            
-            f1_path = os.path.join(output_dir, 'per_class_f1.png')
-            plt.savefig(f1_path, dpi=300, bbox_inches='tight')
+            plt.savefig(os.path.join(output_dir, 'per_class_performance.png'))
             plt.close()
             
-            logger.info(f"Per-class F1 plot saved to {f1_path}")
-        
     except Exception as e:
-        logger.error(f"Visualization creation failed: {e}")
+        logger.error(f"Error creating visualizations: {e}")
 
-def main():
-    """Main experiment function"""
+if __name__ == '__main__':
     args = parse_args()
-    
-    # Setup experiment environment
     device = setup_experiment(args)
     
-    logger.info(f"Starting FedGATSage experiment with {args.dataset} dataset")
-    
-    # Demonstrate community abstraction concept
+    # Demonstrate community abstraction (paper concept)
     demonstrate_community_abstraction(args.data_dir)
     
-    # Run federated learning experiment
+    # Run main experiment
     results = run_federated_experiment(args, device)
     
     # Create visualizations
     create_visualizations(results, args.output_dir)
     
-    # Save final results
-    results_path = os.path.join(args.output_dir, 'final_results.json')
-    save_results(results, results_path)
-    
-    # Print summary
-    print("\n" + "="*60)
-    print("FEDGATSAGE EXPERIMENT COMPLETED")
-    print("="*60)
-    
-    if results.get('evaluation'):
-        eval_results = results['evaluation']
-        print(f"Final Accuracy: {eval_results.get('accuracy', 0):.4f}")
-        print(f"Final F1 Score: {eval_results.get('macro_f1', 0):.4f}")
-        print(f"Balanced Accuracy: {eval_results.get('balanced_accuracy', 0):.4f}")
-    
-    config = results.get('configuration', {})
-    print(f"Configuration:")
-    print(f"  - Clients: {config.get('num_clients', 'N/A')}")
-    print(f"  - Rounds: {config.get('num_rounds', 'N/A')}")
-    print(f"  - Detectors: {config.get('detector_types', 'N/A')}")
-    
-    print(f"\nResults saved to: {args.output_dir}")
-    print("="*60)
-
-if __name__ == "__main__":
-    main()
+    logger.info("Experiment completed successfully!")

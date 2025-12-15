@@ -14,9 +14,9 @@ import time
 import logging
 import os
 
-from .gnn_models import TemporalGATDetector, ContentGATDetector, BehavioralGATDetector, GlobalGraphSAGE
-from .feature_engineering import FeatureEngineer, CentralityFeatureExtractor
-from .community_detection import CommunityAwareProcessor
+from gnn_models import TemporalGATDetector, ContentGATDetector, BehavioralGATDetector, GlobalGraphSAGE
+from feature_engineering import FeatureEngineer, CentralityFeatureExtractor
+from community_detection import CommunityAwareProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -328,139 +328,106 @@ class FedGATSageSystem:
             flow_gen = self.flow_generators[detector_type]
             flow_embeddings, flow_labels = flow_gen.generate_embeddings(client_model, client_data)
             
-            client_updates.append({
-                'detector_type': detector_type,
-                'client_id': client_id,
-                'model_state': client_model.state_dict(),
-                'flow_embeddings': flow_embeddings,
-                'flow_labels': flow_labels,
-                'metrics': metrics
-            })
+            if len(flow_embeddings) > 0:
+                client_updates.append({
+                    'client_id': client_id,
+                    'detector_type': detector_type,
+                    'flow_embeddings': flow_embeddings,
+                    'flow_labels': flow_labels,
+                    'model_state': client_model.state_dict(),
+                    'metrics': metrics
+                })
         
-        logger.info(f"Collected {len(client_updates)} updates for {detector_type}")
         return client_updates
     
-    def _train_client_model(self, model, data: Dict[str, Any], epochs: int = 5) -> Dict[str, float]:
-        """Train client GAT model locally"""
+    def _train_client_model(self, model, data) -> Dict[str, float]:
+        """Train a single client model"""
         model.train()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        criterion = nn.CrossEntropyLoss()
         
         x = data['features'].to(self.device)
         edge_index = data['edge_index'].to(self.device)
         edge_labels = data['edge_labels'].to(self.device)
         
-        losses = []
-        for epoch in range(epochs):
+        # Simple training loop for a few epochs
+        for _ in range(5):
             optimizer.zero_grad()
-            
-            _, edge_predictions = model(x, edge_index)
-            loss = F.cross_entropy(edge_predictions, edge_labels)
-            
+            _, predictions = model(x, edge_index)
+            loss = criterion(predictions, edge_labels)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             
-            losses.append(loss.item())
-        
-        # Calculate accuracy
-        with torch.no_grad():
-            _, edge_preds = model(x, edge_index)
-            predicted_labels = edge_preds.argmax(dim=1)
-            accuracy = (predicted_labels == edge_labels).float().mean().item()
-        
-        return {'loss': losses[-1], 'accuracy': accuracy}
+        return {'loss': loss.item()}
     
     def _aggregate_updates(self, client_updates: List[Dict[str, Any]]) -> float:
-        """Server-side aggregation using GraphSAGE on flow embeddings"""
+        """Aggregate updates using global GraphSAGE model"""
         if not client_updates:
-            return 1.0
-        
-        # Collect all flow embeddings and labels
-        all_flow_embeddings = []
-        all_flow_labels = []
+            return 0.0
+            
+        # Prepare batch for global model
+        all_embeddings = []
+        all_labels = []
         
         for update in client_updates:
-            if len(update['flow_embeddings']) > 0:
-                all_flow_embeddings.append(update['flow_embeddings'])
-                all_flow_labels.append(update['flow_labels'])
+            all_embeddings.append(update['flow_embeddings'].to(self.device))
+            all_labels.append(update['flow_labels'].to(self.device))
+            
+        if not all_embeddings:
+            return 0.0
+            
+        # Concatenate all flow embeddings
+        global_x = torch.cat(all_embeddings, dim=0)
+        global_y = torch.cat(all_labels, dim=0)
         
-        if not all_flow_embeddings:
-            return 1.0
+        # Create a fully connected graph for the global model (simplified)
+        # In a real scenario, we would use the community structure to define edges
+        num_nodes = global_x.shape[0]
+        edge_index = torch.combinations(torch.arange(num_nodes), r=2).t().to(self.device)
         
-        # Combine all flow embeddings
-        combined_embeddings = torch.cat(all_flow_embeddings, dim=0).to(self.device)
-        combined_labels = torch.cat(all_flow_labels, dim=0).to(self.device)
-        
-        # Build overlay graph from flow embeddings
-        edge_index = self._build_overlay_graph(combined_embeddings)
-        
-        # Train global GraphSAGE model
+        # Train global model
         self.global_model.train()
         optimizer = torch.optim.Adam(self.global_model.parameters(), lr=0.001)
+        criterion = nn.CrossEntropyLoss()
         
-        losses = []
-        for epoch in range(10):
-            optimizer.zero_grad()
-            
-            _, predictions = self.global_model(combined_embeddings, edge_index)
-            loss = F.cross_entropy(predictions, combined_labels)
-            
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.global_model.parameters(), max_norm=1.0)
-            optimizer.step()
-            
-            losses.append(loss.item())
+        optimizer.zero_grad()
+        _, predictions = self.global_model(global_x, edge_index)
+        loss = criterion(predictions, global_y)
+        loss.backward()
+        optimizer.step()
         
-        return np.mean(losses)
-    
-    def _build_overlay_graph(self, embeddings: torch.Tensor, threshold: float = 0.7) -> torch.Tensor:
-        """Build overlay graph from flow embeddings using cosine similarity"""
-        n_nodes = embeddings.shape[0]
-        
-        if n_nodes <= 10:
-            # For small graphs, connect all pairs
-            rows = []
-            cols = []
-            for i in range(n_nodes):
-                for j in range(i+1, n_nodes):
-                    rows.extend([i, j])
-                    cols.extend([j, i])
-            
-            edge_index = torch.tensor([rows, cols], dtype=torch.long, device=self.device)
-        else:
-            # For larger graphs, use similarity-based connections
-            similarity_matrix = F.cosine_similarity(embeddings.unsqueeze(0), embeddings.unsqueeze(1), dim=2)
-            
-            rows, cols = [], []
-            for i in range(n_nodes):
-                # Connect to most similar nodes
-                similarities = similarity_matrix[i]
-                top_k = min(5, n_nodes-1)
-                _, top_indices = torch.topk(similarities, top_k+1)  # +1 to exclude self
-                
-                for j in top_indices[1:]:  # Skip self connection
-                    if similarities[j] > threshold:
-                        rows.append(i)
-                        cols.append(j.item())
-            
-            edge_index = torch.tensor([rows, cols], dtype=torch.long, device=self.device)
-        
-        return edge_index
+        return loss.item()
     
     def _redistribute_models(self):
-        """Redistribute updated parameters to clients with weighted averaging"""
+        """Redistribute global knowledge back to clients"""
+        # In this architecture, the global model learns to classify flows based on embeddings.
+        # We can redistribute the knowledge by averaging the client models, 
+        # weighted by their contribution to the global model performance.
+        
+        # For simplicity in this reference implementation, we use simple averaging
+        # of the client models for each detector type.
+        
         for detector_type in self.detector_types:
-            client_states = [model.state_dict() 
-                           for model in self.client_models[detector_type].values()]
+            client_states = []
+            for client_id in self.client_models[detector_type]:
+                client_states.append(self.client_models[detector_type][client_id].state_dict())
             
             if not client_states:
                 continue
-            
+                
             # Simple averaging (can be enhanced with performance weighting)
             averaged_state = {}
             for key in client_states[0].keys():
-                averaged_state[key] = torch.stack([state[key] for state in client_states]).mean(0)
+                # Stack all client tensors for this key
+                stacked = torch.stack([state[key] for state in client_states])
+                
+                # Handle non-floating point tensors (e.g. LongTensor for buffers)
+                if not stacked.is_floating_point():
+                    # Cast to float for averaging, then back to original type
+                    averaged_state[key] = stacked.float().mean(0).type(stacked.dtype)
+                else:
+                    averaged_state[key] = stacked.mean(0)
             
-            # Update all client models with averaged parameters
-            for client_model in self.client_models[detector_type].values():
-                client_model.load_state_dict(averaged_state)
+            # Update all clients with averaged state
+            for client_id in self.client_models[detector_type]:
+                self.client_models[detector_type][client_id].load_state_dict(averaged_state)

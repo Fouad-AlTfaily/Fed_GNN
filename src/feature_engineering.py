@@ -11,25 +11,32 @@ import logging
 logger = logging.getLogger(__name__)
 
 class FeatureEngineer:
-    """Feature engineering for specialized GAT detectors"""
+    """
+    Handles the extraction of specialized features for each GAT detector.
+    This ensures that the Temporal, Content, and Behavioral models each get the 
+    data they need to excel at their specific tasks.
+    """
     
     def __init__(self, detector_type='temporal'):
         self.detector_type = detector_type
         self.created_features = []
         
-        # Define attack groups for specialization
+        # We group attacks to ensure the right features are generated for the right problem
         self.temporal_attacks = ['ddos', 'dos', 'scanning']
         self.content_attacks = ['injection', 'xss'] 
         self.behavioral_attacks = ['password', 'backdoor', 'ransomware']
     
     def extract_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract specialized features based on detector type"""
+        """
+        Main entry point: takes raw data and adds the specialized columns 
+        needed for the current detector type.
+        """
         result_df = df.copy()
         
-        # Add base features
+        # First, everyone gets the basics (flow rates, payload sizes)
         result_df = self._add_base_features(result_df)
         
-        # Add detector-specific features
+        # Then we add the specialized features
         if self.detector_type == 'temporal':
             result_df = self._add_temporal_features(result_df)
         elif self.detector_type == 'content':
@@ -37,7 +44,7 @@ class FeatureEngineer:
         elif self.detector_type == 'behavioral':
             result_df = self._add_behavioral_features(result_df)
             
-        logger.info(f"Created {len(self.created_features)} features for {self.detector_type}")
+        logger.info(f"Engineered {len(self.created_features)} new features for {self.detector_type} detection")
         return result_df
     
     def _add_base_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -154,3 +161,6 @@ class CentralityFeatureExtractor:
         
         logger.info(f"Found {len(centrality_cols)} centrality features: {centrality_cols}")
         return df
+
+
+

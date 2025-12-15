@@ -11,13 +11,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class TemporalGATDetector(nn.Module):
-    """GAT specialized for temporal attacks (DDoS, DoS, Scanning)"""
+    """
+    GAT specialized for temporal attacks (DDoS, DoS, Scanning).
+    This model focuses on the timing and frequency of interactions.
+    """
     
     def __init__(self, input_dim: int, hidden_dim: int = 256, 
                  num_heads: int = 8, num_classes: int = 2, dropout: float = 0.2):
         super().__init__()
         
-        # Multi-head attention layers
+        # We use multi-head attention to capture different types of temporal relationships
+        # (e.g., one head for short bursts, another for periodic patterns)
         self.gat1 = GATConv(input_dim, hidden_dim // num_heads, 
                            heads=num_heads, concat=True, dropout=dropout)
         self.gat2 = GATConv(hidden_dim, hidden_dim, 
@@ -25,7 +29,8 @@ class TemporalGATDetector(nn.Module):
         self.gat3 = GATConv(hidden_dim, hidden_dim, 
                            heads=1, concat=False, dropout=dropout)
         
-        # Temporal attention mechanism
+        # Specialized attention mechanism for temporal weighting
+        # This allows the model to focus on specific time windows or burst patterns
         self.temporal_attention = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim // 2),
             nn.LeakyReLU(0.2),
@@ -33,12 +38,12 @@ class TemporalGATDetector(nn.Module):
             nn.Sigmoid()
         )
         
-        # Normalization layers
+        # Layer normalization helps with training stability, especially for deep GNNs
         self.norm1 = nn.LayerNorm(hidden_dim)
         self.norm2 = nn.LayerNorm(hidden_dim)
         self.norm3 = nn.LayerNorm(hidden_dim)
         
-        # Edge classifier for flow classification
+        # The edge classifier determines if a specific flow (edge) represents an attack
         self.edge_classifier = nn.Sequential(
             nn.Linear(hidden_dim * 2, hidden_dim * 2),
             nn.BatchNorm1d(hidden_dim * 2),
@@ -51,7 +56,7 @@ class TemporalGATDetector(nn.Module):
             nn.Linear(hidden_dim, num_classes)
         )
         
-        # Residual connections
+        # Residual connections prevent the "vanishing gradient" problem in deeper networks
         self.skip_conn1 = nn.Linear(input_dim, hidden_dim)
         self.skip_conn2 = nn.Linear(hidden_dim, hidden_dim)
         
@@ -294,3 +299,6 @@ class GlobalGraphSAGE(nn.Module):
         predictions = self.classifier(x)
         
         return embeddings, predictions
+
+
+
