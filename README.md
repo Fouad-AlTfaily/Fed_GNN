@@ -1,5 +1,5 @@
-# FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection
-
+**# FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection
+**
 [![Paper](https://img.shields.io/badge/Paper-Scientific%20Reports-red)](https://doi.org/10.1038/s41598-025-25175-1)
 [![License](https://img.shields.io/badge/License-Open%20Access-green)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
@@ -11,8 +11,7 @@ Official implementation of **"Graph-based federated learning approach for intrus
 
 ---
 
-## 📋 Abstract
-
+**## Abstract**
 FedGATSage addresses critical limitations in federated learning for IoT intrusion detection where traditional approaches using LSTM/CNN cannot capture structural patterns, and GNN-based federated methods lose temporal patterns during parameter aggregation. Our hybrid architecture integrates client-side Graph Attention Networks (GAT) with server-side GraphSAGE through community abstraction, achieving:
 
 - **78.58% balanced accuracy** on NF-ToN-IoT (80.24% on CIC-ToN-IoT)
@@ -22,7 +21,7 @@ FedGATSage addresses critical limitations in federated learning for IoT intrusio
 
 ---
 
-## 🎯 Key Innovations
+**## Key Innovations**
 
 ### 1. **Specialized GAT Detector Variants**
 Three specialized architectures targeting different attack categories:
@@ -47,7 +46,7 @@ Three specialized architectures targeting different attack categories:
 
 ---
 
-## 📊 Performance Results
+## Performance Results
 
 ### Overall Performance
 
@@ -83,45 +82,8 @@ Three specialized architectures targeting different attack categories:
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        CLIENT SIDE                           │
-│                                                               │
-│  Network Flow Data → Graph Construction                      │
-│         ↓                                                     │
-│  ┌──────────────────────────────────────────────────┐       │
-│  │         Specialized GAT Variants                  │       │
-│  │  ┌─────────────┐ ┌──────────────┐ ┌────────────┐│       │
-│  │  │ Temporal    │ │   Content    │ │ Behavioral ││       │
-│  │  │     GAT     │ │     GAT      │ │    GAT     ││       │
-│  │  │  (DDoS,DoS) │ │ (Injection,  │ │ (Backdoor, ││       │
-│  │  │             │ │     XSS)     │ │  Password) ││       │
-│  │  └─────────────┘ └──────────────┘ └────────────┘│       │
-│  └──────────────────────────────────────────────────┘       │
-│         ↓                                                     │
-│  Community Detection (Louvain Algorithm)                     │
-│         ↓                                                     │
-│  Community Embeddings → Privacy Boundary                     │
-└───────────────────────────────┬─────────────────────────────┘
-                                │
-                    ┌───────────┴───────────┐
-                    ↓                       ↓
-        Community Embeddings    Model Parameters
-                    │                       │
-                    └───────────┬───────────┘
-                                ↓
-┌─────────────────────────────────────────────────────────────┐
-│                       SERVER SIDE                            │
-│                                                               │
-│  Overlay Graph Construction                                  │
-│  (Communities as nodes, similarity as edges)                 │
-│         ↓                                                     │
-│  GraphSAGE Processing                                        │
-│  (Global pattern learning via neighborhood sampling)         │
-│         ↓                                                     │
-│  Federated Aggregation (Performance-weighted)                │
-│         ↓                                                     │
-│  Updated Model Parameters → Clients                          │
-└─────────────────────────────────────────────────────────────┘
+<img width="664" height="491" alt="image" src="https://github.com/user-attachments/assets/b13b3206-93e4-4782-80a5-0452df76b7b6" />
+
 ```
 
 ---
