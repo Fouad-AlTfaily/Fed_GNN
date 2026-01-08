@@ -1,5 +1,7 @@
 # Algorithm Mapping: Paper to Code
 
+*Last Updated: January 2026*
+
 This document provides a detailed mapping between the algorithms described in the FedGATSage paper and their implementation in the codebase.
 
 ## Overview
@@ -98,21 +100,24 @@ The paper mentions three specialized GAT variants for different attack types:
 
 To validate that our implementation matches the paper's intent:
 
-1. **Community Structure**: Run `community_detection.py` to see explicit community detection
-2. **Flow Abstraction**: Check `FlowEmbeddingGenerator` to see how flows represent communities
-3. **Specialized Detection**: Test each GAT variant on its target attack types
-4. **Privacy Preservation**: Verify no raw IP data leaves clients in federated process
-5. **Performance**: Compare results with paper's reported metrics
+1.  **Community Structure**: Run `community_detection.py` to see explicit community detection
+2.  **Flow Abstraction**: Check `FlowEmbeddingGenerator` to see how flows represent communities
+3.  **Specialized Detection**: Test each GAT variant on its target attack types
+4.  **Privacy Preservation**: Verify no raw IP data leaves clients in federated process
+5.  **Performance**: Compare results with paper's reported metrics
 
 ## Running the Complete Pipeline
 
 ```bash
-# Demonstrate community abstraction
-python experiments/fedgatsage_experiment.py --data_dir /path/to/data --demo_mode
+# 1. Prepare Data (New)
+python preprocess_data.py --input_file data/raw_dataset.csv --output_dir data --num_clients 5
 
-# Full experiment matching paper
+# 2. Demonstrate community abstraction
+python experiments/fedgatsage_experiment.py --data_dir data --demo_mode
+
+# 3. Full experiment matching paper
 python experiments/fedgatsage_experiment.py \
-  --data_dir /path/to/data \
+  --data_dir data \
   --dataset cic_ton_iot \
   --num_clients 5 \
   --num_rounds 15 \
@@ -120,3 +125,4 @@ python experiments/fedgatsage_experiment.py \
 
 
   This mapping demonstrates that while our implementation uses flow-level abstraction rather than explicit community detection, it achieves the same privacy, performance, and architectural goals described in the FedGATSage paper.
+```
