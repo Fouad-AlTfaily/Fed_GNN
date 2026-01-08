@@ -1,6 +1,5 @@
 # FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection
 
-<<<<<<< HEAD
 [![Paper](https://img.shields.io/badge/Paper-Scientific%20Reports-red)](https://doi.org/10.1038/s41598-025-25175-1)
 [![License](https://img.shields.io/badge/License-Open%20Access-green)](http://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
@@ -42,10 +41,6 @@ Three specialized architectures targeting different attack categories:
 - **Server-side GraphSAGE**: Learns global patterns across communities without destroying temporal signatures
 - **Adaptive weighting**: Performance-based client contribution weighting addresses heterogeneity
 
-### 4. **Enhanced Pattern Preservation**
-- Maintains both structural relationships (network topology) and temporal sequences (attack evolution)
-- Strong correlation (0.87) between community structure and attack patterns validates abstraction approach
-
 ---
 
 ## **Performance Results**
@@ -61,24 +56,6 @@ Three specialized architectures targeting different attack categories:
 
 **Key Achievement**: Only 2.8% performance gap compared to centralized models while maintaining complete privacy.
 
-### Attack-Specific Detection (NF-ToN-IoT)
-
-| Attack Type | Precision | Recall | F1 Score | FNR |
-|-------------|-----------|--------|----------|-----|
-| **Benign** | 0.9986 | 0.9944 | 0.9942 | 0.0056 |
-| **Backdoor** | 0.9451 | 0.9942 | 0.9750 | 0.0058 |
-| **DDoS** | 0.8939 | 0.5322 | 0.6354 | 0.4678 |
-| **DoS** | 0.3896 | 1.0000 | 0.5721 | 0.0000 |
-| **Injection** | 0.9760 | 0.3412 | 0.5100 | 0.6588 |
-| **XSS** | 0.4197 | 0.9990 | 0.5900 | 0.0010 |
-
-### Computational Efficiency
-
-- **Training time**: 7.5 hours (vs. 5.5 hours centralized, 8.5 hours Fed-LSTM)
-- **Memory**: 2.4GB RAM, 35% GPU utilization (client-side, NF-ToN-IoT)
-- **Communication**: 3.8 MB/round (vs. 4.2 MB for alternative configurations)
-- **Convergence**: 25-30% fewer federation rounds than alternative setups
-
 ---
 
 ## **Architecture**
@@ -86,6 +63,27 @@ Three specialized architectures targeting different attack categories:
 ![FedGATSage Architecture](https://github.com/user-attachments/assets/b13b3206-93e4-4782-80a5-0452df76b7b6)
 
 *Figure 1: Overview of the FedGATSage architecture showing client-side GAT processing with community detection, server-side GraphSAGE on overlay graph, and bidirectional model parameter updates.*
+
+---
+
+## **Project Structure**
+
+We have organized the codebase to facilitate reproducibility and clarity:
+
+```
+Fed_GNN/
+├── data/                   # Generated dataset directory (managed by preprocessing script)
+├── experiments/            # Main experiment execution scripts
+│   └── fedgatsage_experiment.py
+├── src/                    # Core implementation modules
+│   ├── federated_learning.py   # Orchestration of the federated process
+│   ├── gnn_models.py           # PyTorch Geometric model definitions (GAT, GraphSAGE)
+│   ├── feature_engineering.py  # Traffic feature extraction logic
+│   ├── community_detection.py  # Community detection and abstraction algorithms
+│   └── utils.py                # Helper functions for metrics and logging
+├── preprocess_data.py      # Utility to prepare raw CSV data for federation
+└── requirements.txt        # Python dependencies
+```
 
 ---
 
@@ -107,205 +105,59 @@ cd Fed_GNN
 pip install -r requirements.txt
 ```
 
-### Required Packages
-```
-torch>=1.8.0
-torch-geometric>=2.0.1
-numpy>=1.19.0
-pandas>=1.2.0
-scikit-learn>=0.24.0
-networkx>=2.5
-python-louvain>=0.15
-matplotlib>=3.3.0
-seaborn>=0.11.0
-```
-
 ---
 
 ## **Dataset Preparation**
 
-### Download Datasets
+### Standard Datasets
+You can use standard datasets like **NF-ToN-IoT** or **CIC-ToN-IoT**:
+1. **NF-ToN-IoT Dataset**: [Download Link](https://www.kaggle.com/datasets/dhoogla/nftoniot)
+2. **CIC-ToN-IoT Dataset**: [Download Link](https://www.kaggle.com/datasets/dhoogla/cictoniot)
 
-1. **NF-ToN-IoT Dataset**
-   - Download from: https://www.kaggle.com/datasets/dhoogla/nftoniot
-   - Place in: `data/nf_ton_iot/`
+### Custom Data
+FedGATSage requires data to be partitioned into client-specific directories. We provide a utility script to handle this automatically.
 
-2. **CIC-ToN-IoT Dataset**
-   - Download from: https://www.kaggle.com/datasets/dhoogla/cictoniot
-   - Place in: `data/cic_ton_iot/`
+If you provide your own CSV file, ensure it contains standard network flow columns:
+*   `Src IP`, `Dst IP` (Required for graph construction)
+*   `Src Port`, `Dst Port`
+*   `Protocol`
+*   `Flow Duration`
+*   `Tot Fwd Pkts`, `Tot Bwd Pkts`
+*   `Attack` (Label column)
 
-### Dataset Structure
+To prepare your data:
+```bash
+# Process a raw CSV file into federated client datasets
+python preprocess_data.py --input_file path/to/dataset.csv --output_dir data --num_clients 5
 ```
-data/
-├── nf_ton_iot/
-│   ├── train.csv
-│   └── test.csv
-└── cic_ton_iot/
-    ├── train.csv
-    └── test.csv
-```
+
+*If you do not have a dataset handy, the experiment script can generate synthetic "dummy" data for demonstration purposes.*
 
 ---
 
 ## **Usage**
 
-### Basic Training
+### Running Experiments
 
-#### Train on NF-ToN-IoT
+The main entry point is `experiments/fedgatsage_experiment.py`.
+
+**Standard Execution:**
 ```bash
-python experiments/fedgatsage_experiment.py \
-    --dataset nf_ton_iot \
-    --num_clients 5 \
-    --num_rounds 30 \
-    --hidden_dim 256 \
-    --attention_heads 8 \
-    --dropout 0.2
+python experiments/fedgatsage_experiment.py --data_dir data --num_clients 5 --num_rounds 15
 ```
 
-#### Train on CIC-ToN-IoT
+**Demo Mode (Fast Verification):**
 ```bash
-python experiments/fedgatsage_experiment.py \
-    --dataset cic_ton_iot \
-    --num_clients 5 \
-    --num_rounds 30 \
-    --hidden_dim 256 \
-    --attention_heads 8 \
-    --dropout 0.2
+python experiments/fedgatsage_experiment.py --data_dir data --demo_mode
 ```
 
-### Advanced Configuration
-
-```bash
-python experiments/fedgatsage_experiment.py \
-    --dataset nf_ton_iot \
-    --num_clients 5 \
-    --num_rounds 30 \
-    --hidden_dim 256 \
-    --attention_heads 8 \
-    --dropout 0.2 \
-    --learning_rate 0.001 \
-    --batch_size 512 \
-    --similarity_threshold 0.7 \
-    --adaptive_weighting True \
-    --use_gpu True
-```
-
-### Evaluation Only
-
-```bash
-python experiments/evaluate_model.py \
-    --dataset nf_ton_iot \
-    --model_path checkpoints/fedgatsage_best.pth \
-    --output_dir results/
-```
-
----
-
-## **Reproducing Paper Results**
-
-### Full Experimental Pipeline
-
-```bash
-# Run complete evaluation on both datasets
-python experiments/run_all_experiments.py \
-    --datasets nf_ton_iot cic_ton_iot \
-    --num_runs 3 \
-    --save_results results/
-
-# Generate performance comparison tables
-python analysis/generate_comparison_tables.py \
-    --results_dir results/ \
-    --output_dir paper_results/
-
-# Create visualization figures
-python analysis/generate_figures.py \
-    --results_dir results/ \
-    --output_dir paper_figures/
-```
-
-### Expected Outputs
-- Performance metrics (Table 1, 2, 3 from paper)
-- Confusion matrices (Figure 4)
-- Convergence plots (Figure 5)
-- Specialized detector analysis (Figure 6)
-- Community-attack correlation (Figure 7)
-
----
-
-## **Key Components**
-
-### Client-Side Processing
-```python
-from models.gat_variants import TemporalGAT, ContentGAT, BehavioralGAT
-from federated.client import FederatedClient
-
-# Initialize specialized detectors
-temporal_gat = TemporalGAT(in_dim=feature_dim, hidden_dim=256, out_dim=num_classes)
-content_gat = ContentGAT(in_dim=feature_dim, hidden_dim=256, out_dim=num_classes)
-behavioral_gat = BehavioralGAT(in_dim=feature_dim, hidden_dim=256, out_dim=num_classes)
-
-# Create federated client
-client = FederatedClient(
-    models=[temporal_gat, content_gat, behavioral_gat],
-    data=local_network_data
-)
-
-# Train and generate community embeddings
-community_embeddings = client.train_and_generate_embeddings()
-```
-
-### Server-Side Processing
-```python
-from models.graphsage import GraphSAGE
-from federated.server import FederatedServer
-
-# Initialize server
-server = FederatedServer(
-    model=GraphSAGE(hidden_dim=256),
-    num_clients=5
-)
-
-# Aggregate and update
-global_embeddings = server.aggregate_community_embeddings(client_embeddings)
-updated_params = server.update_global_model(global_embeddings)
-```
-
----
-
-## **Project Structure**
-
-```
-Fed_GNN/
-├── data/                          # Dataset storage
-│   ├── nf_ton_iot/
-│   └── cic_ton_iot/
-├── models/                        # Model architectures
-│   ├── gat_variants.py           # Temporal, Content, Behavioral GAT
-│   ├── graphsage.py              # Server-side GraphSAGE
-│   └── ensemble.py               # Ensemble fusion
-├── federated/                     # Federated learning components
-│   ├── client.py                 # Client-side processing
-│   ├── server.py                 # Server-side aggregation
-│   └── aggregation.py            # Weighted aggregation strategies
-├── preprocessing/                 # Data preprocessing
-│   ├── graph_construction.py     # Network → Graph conversion
-│   ├── feature_engineering.py    # Specialized feature extraction
-│   └── community_detection.py    # Louvain algorithm implementation
-├── experiments/                   # Experiment scripts
-│   ├── fedgatsage_experiment.py  # Main training script
-│   ├── evaluate_model.py         # Evaluation script
-│   └── run_all_experiments.py    # Full pipeline
-├── analysis/                      # Result analysis
-│   ├── generate_comparison_tables.py
-│   ├── generate_figures.py
-│   └── statistical_tests.py
-├── utils/                         # Utility functions
-│   ├── metrics.py                # Evaluation metrics
-│   ├── visualization.py          # Plotting functions
-│   └── logger.py                 # Logging utilities
-├── requirements.txt               # Python dependencies
-└── README.md                      # This file
-```
+### Configuration
+You can adjust parameters via command line arguments:
+- `--dataset`: Choose dataset ('nf_ton_iot', 'cic_ton_iot')
+- `--num_clients`: Number of federated clients
+- `--num_rounds`: Number of federation rounds
+- `--detector_types`: List of detectors to use (temporal, content, behavioral)
+- `--device`: 'cuda' or 'cpu'
 
 ---
 
@@ -329,149 +181,9 @@ If you use FedGATSage in your research, please cite our paper:
 
 ---
 
-## **Key Technical Contributions**
-
-### 1. Solving the Dual Limitation Problem
-- **Traditional federated methods (LSTM/CNN)**: Cannot capture structural patterns due to architectural constraints
-- **GNN federated methods**: Lose temporal patterns during parameter aggregation
-- **FedGATSage**: Simultaneously preserves both through community abstraction and specialized detectors
-
-### 2. Community Abstraction Mathematics
-
-**Flow embedding creation** (combining endpoints):
-```
-flow_emb = [source_emb ⊕ dest_emb ⊕ (source_emb ⊗ dest_emb) ⊕ |source_emb - dest_emb|]
-```
-
-**Community aggregation** (weighted by importance):
-```
-community_emb = Σ(importance_score_i × node_emb_i) / Σ(importance_score_i)
-```
-
-**Similarity-based edge creation**:
-```
-similarity(C_i, C_j) = (C_i · C_j) / (||C_i|| · ||C_j||)
-```
-
-### 3. Complexity Analysis
-
-- **Time Complexity (per round)**:
-  - Client GAT: O(|V| · d · h + |E| · d · h)
-  - Community Detection: O(|E| log |V|)
-  - Server GraphSAGE: O(k · |F| · d)
-
-- **Space Complexity**:
-  - Client: O(|V| · d + L · d²)
-  - Server: O(|C| · |F| · d)
-
-- **Communication Complexity**:
-  - O(|F| · d) per client → 85% reduction vs. node-level sharing
-
----
-
-## **Troubleshooting**
-
-### Common Issues
-
-**1. CUDA Out of Memory**
-```bash
-# Reduce batch size
---batch_size 256
-
-# Or use CPU
---use_gpu False
-```
-
-**2. Community Detection Takes Too Long**
-```bash
-# Increase similarity threshold for faster graph construction
---similarity_threshold 0.8
-```
-
-**3. Poor Convergence**
-```bash
-# Increase number of rounds
---num_rounds 50
-
-# Adjust learning rate
---learning_rate 0.0005
-```
-
----
-
-## **Configuration Parameters**
-
-### Model Hyperparameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `hidden_dim` | 256 | Hidden dimension size for embeddings |
-| `attention_heads` | 8 | Number of attention heads in GAT |
-| `dropout` | 0.2 | Dropout rate for regularization |
-| `num_layers` | 2 | Number of GNN layers |
-| `learning_rate` | 0.001 | Learning rate for optimization |
-
-### Federated Learning Parameters
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `num_clients` | 5 | Number of federated clients |
-| `num_rounds` | 30 | Number of federation rounds |
-| `local_epochs` | 3 | Local training epochs per round |
-| `alpha` | 0.2 | Base weight for client contributions |
-| `similarity_threshold` | 0.7 | Threshold for overlay graph edges |
-
----
-
-## **Advantages Over Existing Methods**
-
-| Feature | Traditional Federated | GNN Federated | **FedGATSage** |
-|---------|----------------------|---------------|----------------|
-| Captures structural patterns | No | Yes | Yes |
-| Preserves temporal patterns | No | No | Yes |
-| Privacy preservation | Yes | Yes | Yes |
-| Low communication overhead | Partial | Partial | Yes (85% reduction) |
-| Detects coordinated attacks | No | No | Yes |
-| Specialized attack detection | No | No | Yes |
-
----
-
-## **Future Work**
-
-We are actively working on:
-
-1. **Dynamic community detection** for evolving networks
-2. **Extended attack categories** beyond current eight types
-3. **Integration with differential privacy** for additional security
-4. **Real-time deployment** on actual IoT infrastructure
-5. **Cross-domain federated learning** across heterogeneous IoT ecosystems
-
----
-
-## **Contributing**
-
-We welcome contributions! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
 ## **License**
 
 This project is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. See [LICENSE](LICENSE) for details.
-
----
-
-## **Acknowledgements**
-
-This work is supported by:
-- **Ektidar**: Lebanese project for youth empowerment
-- **CESI LINEACT UR 7527**: Laboratory in Strasbourg, France
-- **Lebanese University**: Computer Science Department, Faculty of Sciences
 
 ---
 
@@ -481,83 +193,3 @@ This work is supported by:
 - Email: fouad.altfaily@gmail.com
 - GitHub: [@Fouad-AlTfaily](https://github.com/Fouad-AlTfaily)
 - Paper: [Scientific Reports](https://doi.org/10.1038/s41598-025-25175-1)
-
----
-
-## **Related Publications**
-
-1. Al Tfaily, F., et al. (2025). "Generating realistic cyber security datasets for IoT networks with diverse complex network properties." *IoTBDS 2025*.
-
-2. Termos, M., et al. (2024). "GDLC: A new graph deep learning framework based on centrality measures for intrusion detection in IoT networks." *Internet of Things*.
-
-3. Ghalmane, Z., et al. (2019). "Centrality in complex networks with overlapping community structure." *Scientific Reports*.
-
----
-
-<div align="center">
-
-**If you find this work useful, please consider citing our paper and starring the repository!**
-
-</div>
-=======
-## Overview
-
-This repository contains the reference implementation of **FedGATSage**, a novel federated learning architecture designed for privacy-preserving Intrusion Detection Systems (IDS) in IoT networks. By combining client-side Graph Attention Networks (GAT) with server-side GraphSAGE, our approach enables collaborative learning without sharing raw network traffic data.
-
-## Key Innovation: Community Abstraction
-
-The core contribution of this work is the **Community Abstraction** mechanism. Instead of sharing model updates directly or sharing raw data, clients generate "flow embeddings" that represent the relationships between network communities.
-
-*   **Privacy-Preserving**: Raw device data never leaves the local network.
-*   **Structure-Aware**: Captures the topological patterns of attacks (e.g., botnets, DDoS) rather than just individual packet features.
-*   **Efficient**: Reduces communication overhead by sharing abstract embeddings rather than full model weights or large datasets.
-
-## Project Structure
-
-We have organized the codebase to facilitate reproducibility and clarity:
-
-```
-Fed_GNN/
-├── data/                   # Generated dataset directory (managed by preprocessing script)
-├── experiments/            # Main experiment execution scripts
-│   └── fedgatsage_experiment.py
-├── src/                    # Core implementation modules
-│   ├── federated_learning.py   # Orchestration of the federated process
-│   ├── gnn_models.py           # PyTorch Geometric model definitions (GAT, GraphSAGE)
-│   ├── feature_engineering.py  # Traffic feature extraction logic
-│   ├── community_detection.py  # Community detection and abstraction algorithms
-│   └── utils.py                # Helper functions for metrics and logging
-├── preprocess_data.py      # Utility to prepare raw CSV data for federation
-└── requirements.txt        # Python dependencies
-```
-
-## Getting Started
-
-### 1. Prerequisites
-
-```bash
-python experiments/fedgatsage_experiment.py --data_dir data --num_clients 5 --num_rounds 15
-```
-
-**Demo Mode (Fast Verification):**
-```bash
-python experiments/fedgatsage_experiment.py --data_dir data --demo_mode
-```
-
-## Citation
-
-If you use this code in your research, please cite our paper:
-
-```bibtex
-@article{fedgatsage2024,
-  title={FedGATSage: Graph-based Federated Learning for IoT Intrusion Detection},
-  author={AlTfaily, Fouad and [Co-Authors]},
-  journal={[Journal Name]},
-  year={2024}
-}
-```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
->>>>>>> 1826533 (updated codebase to reflect paper with dummy data as fallback in case real world datasets were not found)
