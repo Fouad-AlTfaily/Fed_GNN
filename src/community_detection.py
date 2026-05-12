@@ -27,7 +27,7 @@ class CommunityAwareProcessor:
         (Algorithm 1, Step 2 from FedGATSage paper)
         """
         try:
-            import community as community_louvain
+            import community.community_louvain as community_louvain
             partition = community_louvain.best_partition(graph)
             self.communities = partition
             logger.info(f"Detected {len(set(partition.values()))} communities")
@@ -36,13 +36,24 @@ class CommunityAwareProcessor:
             logger.warning("python-louvain not installed, using NetworkX alternative")
             return self._networkx_community_detection(graph)
     
+    def _partition_to_community_sets(self, communities: Dict[int, int]) -> List[set]:
+        """
+        Convert partition dict {node: community_id} to list-of-sets format
+        [{nodes_in_comm0}, {nodes_in_comm1}, ...] expected by nx.community.modularity()
+        """
+        comm_to_nodes = {}
+        for node, comm_id in communities.items():
+            comm_to_nodes.setdefault(comm_id, set()).add(node)
+        return list(comm_to_nodes.values())
+
     def compute_modularity_vitality(self, graph: nx.Graph, communities: Dict[int, int]) -> Dict[int, float]:
         """
         Compute modularity vitality for each node
         (Algorithm 1, Step 2 from FedGATSage paper)
         """
         modularity_vitality = {}
-        base_modularity = nx.community.modularity(graph, communities.values())
+        community_sets = self._partition_to_community_sets(communities)
+        base_modularity = nx.community.modularity(graph, community_sets)
         
         for node in graph.nodes():
             # Temporarily remove node and recalculate modularity
@@ -51,7 +62,8 @@ class CommunityAwareProcessor:
             temp_communities = {k: v for k, v in communities.items() if k != node}
             
             if len(temp_communities) > 0:
-                new_modularity = nx.community.modularity(temp_graph, temp_communities.values())
+                temp_community_sets = self._partition_to_community_sets(temp_communities)
+                new_modularity = nx.community.modularity(temp_graph, temp_community_sets)
                 modularity_vitality[node] = base_modularity - new_modularity
             else:
                 modularity_vitality[node] = 0.0

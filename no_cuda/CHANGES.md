@@ -52,6 +52,27 @@ Tracks all changes made to run FedGATSage on **CPU-only machines** (no CUDA) wit
 **Error:** `mat1 and mat2 shapes cannot be multiplied (296x14 and 17x256)`  
 **Fix:** Monkey-patched `evaluate_system()` to apply the same feature engineering pipeline to test data before processing.
 
+### Fix 4: O(n²) Edge Blowup in Global GraphSAGE Aggregation
+**File affected (not modified):** `src/federated_learning.py:_aggregate_updates()`  
+**Problem:** `torch.combinations(torch.arange(num_nodes), r=2)` creates a fully-connected graph. For NF-ToN-IoT (~30K flow embeddings across all clients/detectors), this produces ~450M edges → 3.6GB tensor → hang on CPU.  
+**Error:** Hang / out-of-memory after "Starting federated experiment..."  
+**Fix:** Monkey-patched to (a) subsample nodes to max 2000, and (b) use a sparse random graph (max 100K edges) instead of fully-connected.
+
+### Fix 5: Slow `iterrows()` Graph Building + O(n²) Modularity Vitality
+**File affected (not modified):** `src/community_detection.py:create_community_enhanced_features()`  
+**Problem:** (a) Building a NetworkX graph from 90K+ rows using `df.iterrows()` is extremely slow. (b) `compute_modularity_vitality()` copies the entire graph for every node — for a graph with thousands of IPs this takes minutes/hours.  
+**Error:** Hang during community detection phase  
+**Fix:** Monkey-patched to (a) use `df.groupby()` for fast edge-list building, and (b) skip modularity vitality when graph has > 500 nodes (sets `src_mod_vitality`/`dst_mod_vitality` to 0.0 instead).
+
+### Fix 6: ntfy.sh Live Notifications + Interactive Terminal
+**Files affected:** `run_experiment.py` (new code only)  
+**Addition:** 
+- `ntfy_send()` function — POSTs experiment logs to `https://ntfy.sh/asfi-fed-gnn`  
+- `NtfyLogHandler` — custom `logging.Handler` forwarding all log messages to ntfy  
+- All `print()` calls use `flush=True` for immediate terminal output  
+- Training loop wrapped with `tqdm` progress bar showing real-time loss/time/updates  
+- Step-by-step progress indicators `[1/5]` ... `[5/5]` with checkmarks
+
 ---
 
 ## Experiment Results (Demo Mode — Dummy Data)

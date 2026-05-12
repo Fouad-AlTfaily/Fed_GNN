@@ -28,3 +28,6 @@ pyyaml>=5.4.0
 
 # Optional: For enhanced performance
 numba>=0.54.0
+
+# Notifications
+requests>=2.28.0

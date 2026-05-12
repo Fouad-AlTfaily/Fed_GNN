@@ -118,8 +118,13 @@ The original code was written for older library versions. The wrappers (`run_pre
 | `'int' object is not iterable` | NetworkX ≥3.0 | Convert community labels to partition format |
 | `'numpy.ndarray' has no 'to_csv'` | NumPy ≥2.0 | Preserve DataFrame type in `array_split` |
 | `mat1 and mat2 shapes cannot be multiplied` | (logic bug) | Apply feature engineering to test data |
+| **Hang on real datasets** | Torch | Subsample GraphSAGE edges (avoid O(n²) blowup) |
+| **Slow community detection** | Pandas/NetworkX | Fast groupby graph building + skip expensive vitality calc |
+| **No progress feedback** | — | tqdm progress bar + ntfy.sh live notifications |
 
 See `CHANGES.md` for technical details.
+
+> **📱 Live notifications:** All experiment logs are sent to [ntfy.sh/asfi-fed-gnn](https://ntfy.sh/asfi-fed-gnn). Subscribe on your phone with the [ntfy app](https://ntfy.sh/) to follow progress remotely.
 
 ---
 
