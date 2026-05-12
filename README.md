@@ -113,8 +113,24 @@ pip install -r requirements.txt
 
 ### Standard Datasets
 You can use standard datasets like **NF-ToN-IoT** or **CIC-ToN-IoT**:
-1. **NF-ToN-IoT Dataset**: [Download Link](https://www.kaggle.com/datasets/dhoogla/nftoniot)
-2. **CIC-ToN-IoT Dataset**: [Download Link](https://www.kaggle.com/datasets/dhoogla/cictoniot)
+
+> ⚠️ **Important:** The latest Kaggle versions of these datasets have changed their column schemas and no longer contain the required columns. **You must download Version 1** of each dataset.
+
+#### Download Version 1
+
+```bash
+# Download CIC-ToN-IoT (Version 1)
+curl -L -o downloads/cictoniot.zip \
+  "https://www.kaggle.com/api/v1/datasets/download/dhoogla/cictoniot?datasetVersionNumber=1"
+
+# Download NF-ToN-IoT (Version 1)
+curl -L -o downloads/nftoniot.zip \
+  "https://www.kaggle.com/api/v1/datasets/download/dhoogla/nftoniot?datasetVersionNumber=1"
+```
+
+Or visit the Kaggle pages directly:
+- **NF-ToN-IoT (v1)**: [Kaggle Link](https://www.kaggle.com/datasets/dhoogla/nftoniot?datasetVersionNumber=1)
+- **CIC-ToN-IoT (v1)**: [Kaggle Link](https://www.kaggle.com/datasets/dhoogla/cictoniot?datasetVersionNumber=1)
 
 ### Custom Data
 FedGATSage requires data to be partitioned into client-specific directories. We provide a utility script to handle this automatically.
