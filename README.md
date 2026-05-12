@@ -5,7 +5,6 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.8.0+-orange)](https://pytorch.org/)
 
-> **🔧 Running without CUDA/GPU?** See [`no_cuda/`](no_cuda/) for CPU-only setup, compatibility fixes, and wrapper scripts.
 
 Official implementation of **"Graph-based federated learning approach for intrusion detection in IoT networks"** published in *Scientific Reports* (2025).
 
