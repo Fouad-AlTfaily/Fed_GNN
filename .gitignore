@@ -24,3 +24,7 @@ venv.bak/
 
 # Logs
 *.log
+
+# Generated data and results (managed by preprocessing/experiment scripts)
+data/
+results/

@@ -1,0 +1,30 @@
+# CPU-only dependencies for FedGATSage
+# Use when running without CUDA (CPU-only PyTorch).
+#
+# Install with:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements.txt
+#
+# See README.md for full setup instructions.
+
+# Scientific Computing
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+scikit-learn>=1.0.0
+
+# Visualization
+matplotlib>=3.3.0
+seaborn>=0.11.0
+plotly>=5.0.0
+
+# Network Analysis and Community Detection
+networkx>=2.6.0
+python-louvain>=0.15
+
+# Utilities
+tqdm>=4.62.0
+pyyaml>=5.4.0
+
+# Optional: For enhanced performance
+numba>=0.54.0
