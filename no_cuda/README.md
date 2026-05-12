@@ -85,23 +85,27 @@ python run_experiment.py --demo_mode --data_dir ../data --device cpu --num_clien
 ### With Real Dataset (Kaggle)
 
 1. **Download** from Kaggle (both are parquet format):
-   - [NF-ToN-IoT](https://www.kaggle.com/datasets/dhoogla/nftoniot) (~9 MB)
+   - [NF-ToN-IoT](https://www.kaggle.com/datasets/dhoogla/nftoniot) (~9 MB) — NFStream format
    - [CIC-ToN-IoT](https://www.kaggle.com/datasets/dhoogla/cictoniot) (~420 MB)
 
-2. Place the `.parquet` files in `../data/`, then **convert to CSV**:
+2. Place the `.parquet` files in `../data/`, then **convert + map columns**:
    ```bash
+   # Convert parquet → CSV, then map column names to what the code expects
    python convert_parquet.py --all
+   python map_columns.py --all
    ```
+   > `map_columns.py` handles the NF-ToN-IoT NFStream→CICFlowMeter column rename, generates synthetic IPs (dataset has none), and computes missing features.
 
 3. **Preprocess** and **run**:
    ```bash
-   # Preprocess
-   python run_preprocess.py --input_file ../data/CIC-ToN-IoT-V2.csv --output_dir ../data --num_clients 5
-
-   # Full experiment (15 rounds as per paper)
+   # For CIC-ToN-IoT:
+   python run_preprocess.py --input_file ../data/CIC-ToN-IoT-V2_mapped.csv --output_dir ../data --num_clients 5
    python run_experiment.py --data_dir ../data --device cpu --num_clients 5 --num_rounds 15 --dataset cic_ton_iot --output_dir ../results/full
+
+   # For NF-ToN-IoT:
+   python run_preprocess.py --input_file ../data/NF-ToN-IoT_mapped.csv --output_dir ../data --num_clients 5
+   python run_experiment.py --data_dir ../data --device cpu --num_clients 5 --num_rounds 15 --dataset nf_ton_iot --output_dir ../results/full
    ```
-   > For NF-ToN-IoT, use `--input_file ../data/NF-ToN-IoT.csv --dataset nf_ton_iot`.
 
 ---
 
