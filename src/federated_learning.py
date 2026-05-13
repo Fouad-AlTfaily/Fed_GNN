@@ -33,10 +33,13 @@ class FlowEmbeddingGenerator:
         """
         model.eval()
         with torch.no_grad():
-            # Extract graph data
-            x = data['features']
-            edge_index = data['edge_index'] 
-            edge_labels = data['edge_labels']
+            # Get device from model parameters
+            device = next(model.parameters()).device
+            
+            # Extract graph data and move to model's device
+            x = data['features'].to(device)
+            edge_index = data['edge_index'].to(device)
+            edge_labels = data['edge_labels'].to(device)
             
             logger.info(f"Generating embeddings for {x.shape[0]} nodes, {edge_index.shape[1]} edges")
             
@@ -106,7 +109,7 @@ class FlowEmbeddingGenerator:
         
         # Add traffic features if available
         if 'traffic_features' in data and data['traffic_features'] is not None:
-            traffic_features = data['traffic_features'][idx]
+            traffic_features = data['traffic_features'][idx].to(src_emb.device)
             embedding_parts.append(traffic_features)
         
         # Combine all parts into flow embedding

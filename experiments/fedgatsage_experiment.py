@@ -281,6 +281,11 @@ def evaluate_system(fed_system: FedGATSageSystem, args) -> dict:
         df_test = pd.read_csv(test_data_path)
         if args.demo_mode:
             df_test = df_test.head(1000) # Reduce size for demo
+        
+        # Apply the SAME preprocessing pipeline as load_client_data
+        df_test = test_loader.feature_engineer.extract_features(df_test)
+        df_test = test_loader.centrality_extractor.extract_centrality_features(df_test)
+        df_test = test_loader.community_processor.create_community_enhanced_features(df_test, {})
             
         test_data = test_loader._process_to_graph(df_test)
         
